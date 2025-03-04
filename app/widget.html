@@ -4,6 +4,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa con Google Maps</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <h2>Ubicación en Google Maps</h2>
+    <div id="map" style="height: 500px; width: 100%;"></div>
+
+    <script>
+        const GOOGLE_MAPS_API_KEY = "AIzaSyAPGd6YugcQP6Sxj9lgPwPejKD-vWDkFMY"; // Reemplázala con tu clave de Google Maps
+        const DEFAULT_ADDRESS = "Calle 77 # 59-35, Barranquilla, Colombia";
+        let map, marker;
+
+        // Función para cargar Google Maps de forma asíncrona
+        function loadGoogleMaps() {
+            return new Promise((resolve, reject) => {
+                if (window.google && window.google.maps) {
+                    resolve();
+                    return;
+                }
+
+                const script = document.createElement("script");
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&callback=onGoogleMapsLoaded`;
+                script.async = true;
+                script.defer = true;
+                window.onGoogleMapsLoaded = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+
+        // Función para obtener coordenadas desde una dirección
+        async function geocodeAddress(address) {
+            try {
+                const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${GOOGLE_MAPS_API_KEY}`);
+                const data = await response.json();
+
+                if (data.status === "OK") {
+                    const location = data.results[0].geometry.location;
+                    console.log("Coordenadas obtenidas:", location.lat, location.lng);
+                    return location;
+                } else {
+                    console.error("Error en la geocodificación:", data.status);
+                    return null;
+                }
+            } catch (error) {
+                console.error("Error en la solicitud a la API de Google Maps:", error);
+                return null;
+            }
+        }
+
+        // Función para inicializar el mapa con coordenadas dinámicas
+        function initMap(lat, lng) {
+            if (!lat || !lng) {
+                console.error("No se recibieron coordenadas válidas.");
+                return;
+            }
+
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: lat, lng: lng },
+                zoom: 15
+            });
+
+            marker = new google.maps.Marker({
+                position: { lat: lat, lng: lng },
+                map: map,
+                title: "Ubicación"
+            });
+
+            console.log("Mapa y marcador renderizados correctamente.");
+        }
+
+        // Ejecutar el flujo completo
+        async function renderMap() {
+            await loadGoogleMaps(); // Cargar Google Maps primero
+            const location = await geocodeAddress(DEFAULT_ADDRESS); // Obtener coordenadas
+
+            if (location) {
+                initMap(location.lat, location.lng); // Inicializar el mapa con las coordenadas obtenidas
+            } else {
+                console.error("No se pudo obtener una ubicación válida.");
+            }
+        }
+
+        // Ejecutar la función principal
+        renderMap();
+    </script>
+</body>
+
+</html>
+
+<!-- con zoho -->
+
+
+<!-- <!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mapa en Zoho CRM</title>
     <script src="https://live.zwidgets.com/js-sdk/1.2/ZohoEmbededAppSDK.min.js"></script>
     <link rel="stylesheet" href="style.css">
@@ -116,4 +216,4 @@
     </script>
 </body>
 
-</html>
+</html> -->
