@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa en Zoho CRM</title>
+    <script src="https://live.zwidgets.com/js-sdk/1.2/ZohoEmbededAppSDK.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h2>Ubicación en Google Maps</h2>
+    <div id="map" style="height: 500px; width: 100%;"></div>
+
+    <script>
+        // API Key de Google Maps (Reemplázala con la tuya)
+        const GOOGLE_MAPS_API_KEY = "AIzaSyAPGd6YugcQP6Sxj9lgPwPejKD-vWDkFMY";
+        var addressDefault = "Calle 77 # 59-35, Barranquilla, Colombia"; // Dirección de respaldo
+
+        // Función para inicializar Google Maps
+        function initMap(lat, lng) {
+            if (typeof lat !== 'number' || typeof lng !== 'number') {
+                console.error("Latitud y longitud no válidas:", lat, lng);
+                return;
+            }
+
+            const map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: lat, lng: lng },
+                mapId: '95cfc45636093b97',
+                zoom: 15
+            });
+
+            const position = new google.maps.LatLng(lat, lng);
+            const marker = new google.maps.marker.AdvancedMarkerElement({
+                position: position,
+                map: map,
+                title: "Ubicación"
+            });
+        }
+        
+        function geocodeAddress(address) {
+            
+            const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressDefault)}&key=${GOOGLE_MAPS_API_KEY}`;
+
+            console.log( url); // Para depuración
+            // Función para obtener coordenadas de una dirección
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === "OK") {
+
+                        const location = data.results[0].geometry.location;
+                        console.log("Coordenadas obtenidas:", location.lat, location.lng);
+                        initMap(location.lat, location.lng); // Llamar a initMap solo después de obtener coordenadas
+                    } else {
+                        console.error("Error en la geocodificación:", data.status);
+                    }
+                })
+                .catch(error => console.error("Error en la solicitud a la API de Google Maps:", error));
+        }
+
+        // Esperar a que el SDK de Zoho CRM esté listo
+        ZOHO.embeddedApp.on("PageLoad", function(data) {
+            console.log("Widget cargado con datos:", data);
+
+            try {
+                var direccion = ZDK?.Page?.getField("Direccion")?.getValue(); // Verifica si ZDK está disponible
+
+                if (direccion) {
+                    console.log("Dirección obtenida del CRM:", direccion);
+                    geocodeAddress(direccion);
+                } else {
+                    console.log("No hay dirección en el CRM. Usando dirección por defecto.");
+                    geocodeAddress(addressDefault);
+                }
+            } catch (error) {
+                console.error("Error al obtener la dirección del CRM:", error);
+                console.log("Usando dirección por defecto.");
+                geocodeAddress(addressDefault);
+            }
+        });
+
+        ZOHO.embeddedApp.init();
+
+        // Cargar el script de Google Maps de forma asíncrona
+        const script = document.createElement("script");
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=marker`;
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+    </script>
+</body>
+</html>
